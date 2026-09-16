@@ -8,14 +8,14 @@ const Badge = ({ children, variant = "success" }) => {
   return (
     <span
       className={`
+        w-[107px]
+        h-[28px]
+        px-[20px]
+        rounded-[33px]
+        border
         inline-flex
         items-center
         justify-center
-        min-w-[134px]
-        h-[35px]
-        px-4
-        rounded-full
-        border
         text-caption
         ${styles[variant]}
       `}

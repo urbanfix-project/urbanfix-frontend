@@ -20,7 +20,7 @@ const Input = ({
   }
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="w-[499px] flex flex-col gap-[4px]">
       {label && (
         <label className="text-label text-blueLight">
           {label}
@@ -34,8 +34,8 @@ const Input = ({
         placeholder={placeholder}
         disabled={disabled}
         className={`
-          w-full
-          h-[60px]
+          w-[499px]
+          h-[68px]
           px-10
           rounded-full
           border-2
@@ -45,10 +45,8 @@ const Input = ({
           transition
           ${borderColor}
           ${textColor}
-
           focus:border-primary
           focus:text-primary
-
           disabled:cursor-not-allowed
           disabled:bg-gray-200
           disabled:border-blueLight
