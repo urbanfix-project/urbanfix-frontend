@@ -1,6 +1,9 @@
 // src/App.jsx
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+
+import ProtectedRoute from "./components/ProtectedRoute";
+import PrivateLayout from "./components/PrivateLayout";
 
 function Login() {
   return <h1>Login</h1>;
@@ -11,69 +14,108 @@ function Register() {
 }
 
 function ClienteHome() {
-  return <h1>Panel Cliente</h1>;
+  return (
+    <div className="p-8">
+      <h1 className="text-h1 text-primary">
+        Panel Cliente
+      </h1>
+    </div>
+  );
 }
 
 function TecnicoHome() {
-  return <h1>Panel Técnico</h1>;
+  return (
+    <div className="p-8">
+      <h1 className="text-h1 text-primary">
+        Panel Técnico
+      </h1>
+    </div>
+  );
 }
 
 function AdminHome() {
-  return <h1>Panel Administrador</h1>;
+  return (
+    <div className="p-8">
+      <h1 className="text-h1 text-primary">
+        Panel Administrador
+      </h1>
+    </div>
+  );
 }
 
 function App() {
-  // 💡 SIMULACIÓN DE AUTENTICACIÓN
-  // Más adelante podés reemplazar esto por tu AuthContext, Redux o localStorage
+  // Simulación de autenticación
   const user = {
     isAuthenticated: true,
-    role: "client" // Opciones: "client", "technician", "admin"
+    role: "technician",
   };
 
   return (
     <BrowserRouter>
       <Routes>
+
         {/* ================= RUTAS PÚBLICAS ================= */}
+
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* ================= RUTAS PROTEGIDAS ================= */}
-        
-        {/* Ruta privada - Cliente */}
+
+        {/* ================= RUTAS PRIVADAS ================= */}
+
         <Route
           element={
             <ProtectedRoute
-              isAllowed={user.isAuthenticated && user.role === "client"}
+              isAllowed={user.isAuthenticated}
             />
           }
         >
-          <Route path="/cliente" element={<ClienteHome />} />
-        </Route>
+          {/* Layout privado con Navbar */}
+          <Route element={<PrivateLayout />}>
 
-        {/* Ruta privada - Técnico */}
-        <Route
-          element={
-            <ProtectedRoute
-              isAllowed={user.isAuthenticated && user.role === "technician"}
+            {/* Cliente */}
+            <Route
+              path="/cliente"
+              element={
+                user.role === "client" ? (
+                  <ClienteHome />
+                ) : (
+                  <Login />
+                )
+              }
             />
-          }
-        >
-          <Route path="/tecnico" element={<TecnicoHome />} />
-        </Route>
 
-        {/* Ruta privada - Administrador */}
-        <Route
-          element={
-            <ProtectedRoute
-              isAllowed={user.isAuthenticated && user.role === "admin"}
+            {/* Técnico */}
+            <Route
+              path="/tecnico"
+              element={
+                user.role === "technician" ? (
+                  <TecnicoHome />
+                ) : (
+                  <Login />
+                )
+              }
             />
-          }
-        >
-          <Route path="/admin" element={<AdminHome />} />
+
+            {/* Administrador */}
+            <Route
+              path="/admin"
+              element={
+                user.role === "admin" ? (
+                  <AdminHome />
+                ) : (
+                  <Login />
+                )
+              }
+            />
+
+          </Route>
         </Route>
 
-        {/* Ruta por defecto para URLs inexistentes */}
+
+        {/* ================= RUTA POR DEFECTO ================= */}
+
         <Route path="*" element={<Login />} />
+
       </Routes>
     </BrowserRouter>
   );
