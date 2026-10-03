@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import PrivateLayout from "./components/PrivateLayout";
+import AdminHome from "./pages/admin/AdminHome";
 
 function Login() {
   return <h1>Login</h1>;
@@ -33,21 +34,13 @@ function TecnicoHome() {
   );
 }
 
-function AdminHome() {
-  return (
-    <div className="p-8">
-      <h1 className="text-h1 text-primary">
-        Panel Administrador
-      </h1>
-    </div>
-  );
-}
+
 
 function App() {
   // Simulación de autenticación
   const user = {
     isAuthenticated: true,
-    role: "technician",
+    role: "admin", // Cambia esto a "client" o "technician" para probar diferentes roles
   };
 
   return (
