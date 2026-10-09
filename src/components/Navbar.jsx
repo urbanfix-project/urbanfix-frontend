@@ -1,66 +1,67 @@
 const Navbar = () => {
   return (
-    <nav className="w-full h-[80px] bg-white border-b border-blueLight/30 px-8 flex items-center justify-between">
-      {/* Logo */}
-      <div className="flex items-center">
-        <span className="text-[24px] font-extrabold text-primary">
-          Urban<span className="text-secondary">Fix</span>
-        </span>
-      </div>
+    <nav className="w-full h-[56px] bg-gradient-to-b from-primary to-blueLight shadow-md">
+      <div className="mx-auto max-w-[1160px] h-full px-6 flex items-center justify-between">
 
-      {/* Navegación */}
-      <div className="flex items-center gap-6">
-        <button
-          type="button"
-          className="
-            h-[44px]
-            px-6
-            rounded-[33px]
-            text-button
-            text-primary
-            hover:bg-background
-            transition-colors
-          "
-        >
-          Inicio
-        </button>
+        {/* Logo */}
+        <div className="flex items-center">
+          <span className="text-[20px] font-extrabold text-white">
+            Urban<span className="text-secondary">Fix</span>
+          </span>
+        </div>
 
-        <button
-          type="button"
-          className="
-            h-[44px]
-            px-6
-            rounded-[33px]
-            bg-primary
-            text-white
-            text-button
-            hover:opacity-90
-            transition-opacity
-          "
-        >
-          Mis trabajos
-        </button>
+        {/* Navegación */}
+        <div className="flex items-center h-full gap-5">
 
-        {/* Avatar */}
-        <button
-          type="button"
-          aria-label="Abrir perfil"
-          className="
-            w-[44px]
-            h-[44px]
-            rounded-full
-            bg-blueLight
-            border-2
-            border-primary
-            flex
-            items-center
-            justify-center
-            text-white
-            text-button
-          "
-        >
-          J
-        </button>
+          <button
+            type="button"
+            className="h-full text-[12px] font-medium text-white hover:opacity-80"
+          >
+            Administrador
+          </button>
+
+          <button
+            type="button"
+            className="
+              h-full
+              text-[12px]
+              font-semibold
+              text-white
+              border-b-2
+              border-white
+            "
+          >
+            Solicitudes (128)
+          </button>
+
+          <button
+            type="button"
+            className="h-full text-[12px] font-medium text-white hover:opacity-80"
+          >
+            Usuarios (214)
+          </button>
+
+          {/* Avatar */}
+          <button
+            type="button"
+            className="
+              ml-1
+              w-[24px]
+              h-[24px]
+              rounded-full
+              bg-[#B21E6F]
+              flex
+              items-center
+              justify-center
+              text-[8px]
+              font-semibold
+              text-white
+            "
+          >
+            ER
+          </button>
+
+        </div>
       </div>
     </nav>
   );
