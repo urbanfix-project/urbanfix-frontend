@@ -38,12 +38,14 @@ export default function Login() {
       login(data.user, data.token);
 
       const role = data.user?.role;
-      if (role === 'admin' || role === 'administrador') {
+      if (role === 'ADMIN' || role === 'administrador') {
         navigate('/admin');
-      } else if (role === 'technician' || role === 'tecnico') {
+      } else if (role === 'TECNICO' || role === 'tecnico') {
         navigate('/tecnico');
-      } else {
+      } else if (role === 'CLIENTE' || role === 'cliente') {
         navigate('/cliente');
+      }else {
+        setError('El usuario no tiene un rol válido.');
       }
     } catch (err) {
       setError(
