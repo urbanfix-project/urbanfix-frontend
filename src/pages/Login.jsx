@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from "../context/useAuth";
 import { loginRequest } from '../services/authService';
 
 export default function Login() {
@@ -21,40 +21,62 @@ export default function Login() {
   const emailError = submitted && !email.trim();
   const passwordError = submitted && !password.trim();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitted(true);
-    setError('');
 
-    // Si algún campo está vacío, detenemos la ejecución para mostrar los bordes rojos locales
-    if (!email.trim() || !password.trim()) {
-      return;
-    }
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setSubmitted(true);
+  setError("");
 
-    setLoading(true);
+  if (!email.trim() || !password.trim()) {
+    return;
+  }
 
-    try {
-      const data = await loginRequest({ email, password });
-      login(data.user, data.token);
+  setLoading(true);
 
-      const role = data.user?.role;
-      if (role === 'ADMIN' || role === 'administrador') {
-        navigate('/admin');
-      } else if (role === 'TECNICO' || role === 'tecnico') {
-        navigate('/tecnico');
-      } else if (role === 'CLIENTE' || role === 'cliente') {
-        navigate('/cliente');
-      }else {
-        setError('El usuario no tiene un rol válido.');
-      }
-    } catch (err) {
-      setError(
-        err.response?.data?.message || 'Credenciales inválidas'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+
+try {
+  const response = await loginRequest({
+    email: email.trim(),
+    password,
+  });
+
+  // El backend devuelve el usuario y token dentro de response.data
+  const { user, token } = response.data;
+
+  if (!user || !token) {
+    setError("La respuesta del servidor no contiene el usuario o token.");
+    return;
+  }
+
+  const role = String(user.role ?? "").trim().toUpperCase();
+
+  // Guardar la sesión
+  login(user, token);
+
+  // Redirigir según el rol recibido
+  if (["ADMIN", "ADMINISTRADOR"].includes(role)) {
+    navigate("/admin");
+  } else if (["TECNICO", "TÉCNICO", "TECHNICIAN"].includes(role)) {
+    navigate("/tecnico");
+  } else if (["CLIENTE", "CLIENT", "CUSTOMER"].includes(role)) {
+  console.log("Rol reconocido:", role);
+  console.log("Redirigiendo al panel de cliente...");
+    navigate("/cliente");
+  } else {
+    setError(`El backend devolvió un rol no reconocido: "${role || "vacío"}".`);
+  }
+} catch (err) {
+  console.error("Error al iniciar sesión:", err.response?.data || err);
+
+  setError(
+    err.response?.data?.message || "Credenciales inválidas"
+  );
+} finally {
+  setLoading(false);
+}
+
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F1F5F9] px-4 py-8">

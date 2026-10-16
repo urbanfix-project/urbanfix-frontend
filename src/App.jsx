@@ -1,7 +1,7 @@
 // src/App.jsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { useAuth } from "./context/AuthContext";
+import { useAuth } from "./context/useAuth";
 import Login from "./pages/Login";
 
 function Register() {
@@ -24,7 +24,7 @@ function App() {
   const { user } = useAuth();
 
   const isAuthenticated = !!user;
-  const userRole = user?.role;
+  const userRole = String(user?.role ?? "").trim().toUpperCase();
 
   return (
     <BrowserRouter>
@@ -39,7 +39,8 @@ function App() {
         <Route
           element={
             <ProtectedRoute
-              isAllowed={isAuthenticated && (userRole === "client" || userRole === "cliente")}
+              isAllowed={isAuthenticated &&
+                ["CLIENT", "CLIENTE", "CUSTOMER"].includes(userRole)}
             />
           }
         >
@@ -50,7 +51,8 @@ function App() {
         <Route
           element={
             <ProtectedRoute
-              isAllowed={isAuthenticated && (userRole === "technician" || userRole === "tecnico")}
+              isAllowed={isAuthenticated &&
+                ["TECHNICIAN", "TÉCNICO", "TECH"].includes(userRole)}
             />
           }
         >
@@ -61,7 +63,8 @@ function App() {
         <Route
           element={
             <ProtectedRoute
-              isAllowed={isAuthenticated && (userRole === "admin" || userRole === "administrador")}
+              isAllowed={isAuthenticated &&
+                ["ADMIN", "ADMINISTRADOR"].includes(userRole)}
             />
           }
         >
