@@ -49,6 +49,8 @@ try {
   }
 
   const role = String(user.role ?? "").trim().toUpperCase();
+  console.log("Usuario recibido:", user);
+console.log("Rol del técnico:", JSON.stringify(role));
 
   // Guardar la sesión
   login(user, token);
@@ -57,6 +59,7 @@ try {
   if (["ADMIN", "ADMINISTRADOR"].includes(role)) {
     navigate("/admin");
   } else if (["TECNICO", "TÉCNICO", "TECHNICIAN"].includes(role)) {
+    console.log("Redirigiendo al panel técnico...");
     navigate("/tecnico");
   } else if (["CLIENTE", "CLIENT", "CUSTOMER"].includes(role)) {
   console.log("Rol reconocido:", role);

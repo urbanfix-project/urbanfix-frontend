@@ -3,7 +3,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/useAuth";
 import Login from "./pages/Login";
-
+import AdminHome from "./pages/admin/AdminHome";
+import AdminUsers from "./pages/admin/AdminUsers";
 function Register() {
   return <h1>Registro</h1>;
 }
@@ -16,15 +17,16 @@ function TecnicoHome() {
   return <h1>Panel Técnico</h1>;
 }
 
-function AdminHome() {
-  return <h1>Panel Administrador</h1>;
-}
-
 function App() {
   const { user } = useAuth();
 
   const isAuthenticated = !!user;
-  const userRole = String(user?.role ?? "").trim().toUpperCase();
+  const userRole = String(user?.role ?? "")
+    .trim()
+    .toUpperCase();
+  console.log("Usuario en App:", user);
+  console.log("Rol en App:", userRole);
+  console.log("¿Autenticado?:", isAuthenticated);
 
   return (
     <BrowserRouter>
@@ -34,13 +36,15 @@ function App() {
         <Route path="/register" element={<Register />} />
 
         {/* ================= RUTAS PROTEGIDAS ================= */}
-        
+
         {/* Ruta privada - Cliente */}
         <Route
           element={
             <ProtectedRoute
-              isAllowed={isAuthenticated &&
-                ["CLIENT", "CLIENTE", "CUSTOMER"].includes(userRole)}
+              isAllowed={
+                isAuthenticated &&
+                ["CLIENT", "CLIENTE", "CUSTOMER"].includes(userRole)
+              }
             />
           }
         >
@@ -51,8 +55,10 @@ function App() {
         <Route
           element={
             <ProtectedRoute
-              isAllowed={isAuthenticated &&
-                ["TECHNICIAN", "TÉCNICO", "TECH"].includes(userRole)}
+              isAllowed={
+                isAuthenticated &&
+                ["TECHNICIAN", "TECNICO", "TÉCNICO"].includes(userRole)
+              }
             />
           }
         >
@@ -63,12 +69,14 @@ function App() {
         <Route
           element={
             <ProtectedRoute
-              isAllowed={isAuthenticated &&
-                ["ADMIN", "ADMINISTRADOR"].includes(userRole)}
+              isAllowed={
+                isAuthenticated && ["ADMIN", "ADMINISTRADOR"].includes(userRole)
+              }
             />
           }
         >
           <Route path="/admin" element={<AdminHome />} />
+          <Route path="/admin/usuarios" element={<AdminUsers />} />
         </Route>
 
         {/* Ruta por defecto */}
