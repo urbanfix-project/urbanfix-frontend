@@ -1,66 +1,105 @@
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../context/useAuth";
+
 const Navbar = () => {
+  const { user, logout } = useAuth();
+  const location = useLocation();
+
+  const publicRoutes = [
+    "/",
+    "/login",
+    "/register",
+    "/oficios",
+    "/como-funciona",
+    "/nosotros",
+    "/faq",
+    "/soporte",
+  ];
+
+  const isPublic = publicRoutes.includes(location.pathname);
+
+  const role = String(user?.role ?? "")
+    .trim()
+    .toUpperCase();
+  const isAdmin = ["ADMIN", "ADMINISTRADOR"].includes(role);
+
+  const initials = (user?.name || "Usuario")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase())
+    .join("");
+
+  const links = isPublic
+    ? [
+        { label: "Oficios", to: "/oficios" },
+        { label: "¿Cómo funciona?", to: "/como-funciona" },
+        { label: "Nosotros", to: "/nosotros" },
+        { label: "FAQ", to: "/faq" },
+        { label: "Soporte", to: "/soporte" },
+      ]
+    : isAdmin
+      ? [
+          { label: "Gestión usuarios", to: "/admin/usuarios" },
+          { label: "Monitoreo de solicitudes", to: "/admin" },
+        ]
+      : [
+          { label: "Solicitudes Disponibles", to: "/tecnico" },
+          { label: "Mis trabajos", to: "/tecnico/trabajos" },
+        ];
+
   return (
-    <nav className="w-full h-[56px] bg-gradient-to-b from-primary to-blueLight shadow-md">
-      <div className="mx-auto max-w-[1160px] h-full px-6 flex items-center justify-between">
+    <nav className="relative z-10 h-[60px] w-full border-b border-slate-100 bg-white">
+      <div className="mx-auto flex h-full max-w-[1160px] items-center justify-between gap-4 px-5 sm:px-6">
+        <Link
+          to={isPublic ? "/login" : isAdmin ? "/admin" : "/tecnico"}
+          className="shrink-0 text-[22px] font-extrabold tracking-tight"
+        >
+          <span className="text-[#011659]">Urban</span>
+          <span className="text-[#FF5F15]">Fix</span>
+        </Link>
 
-        {/* Logo */}
-        <div className="flex items-center">
-          <span className="text-[20px] font-extrabold text-white">
-            Urban<span className="text-secondary">Fix</span>
-          </span>
-        </div>
+        <div className="flex h-full items-center gap-3 sm:gap-5">
+          {links.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`hidden whitespace-nowrap text-[11px] font-medium transition-colors sm:block ${
+                location.pathname === link.to
+                  ? "font-semibold text-[#011659]"
+                  : "text-[#011659] hover:text-[#FF5F15]"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
 
-        {/* Navegación */}
-        <div className="flex items-center h-full gap-5">
+          {isPublic ? (
+            <div className="flex items-center gap-2">
+              <Link
+                to="/login"
+                className="rounded-full border border-[#011659] px-4 py-2 text-[10px] font-semibold text-[#011659] transition hover:bg-slate-50 sm:px-5"
+              >
+                Iniciar Sesión
+              </Link>
 
-          <button
-            type="button"
-            className="h-full text-[12px] font-medium text-white hover:opacity-80"
-          >
-            Administrador
-          </button>
-
-          <button
-            type="button"
-            className="
-              h-full
-              text-[12px]
-              font-semibold
-              text-white
-              border-b-2
-              border-white
-            "
-          >
-            Solicitudes (128)
-          </button>
-
-          <button
-            type="button"
-            className="h-full text-[12px] font-medium text-white hover:opacity-80"
-          >
-            Usuarios (214)
-          </button>
-
-          {/* Avatar */}
-          <button
-            type="button"
-            className="
-              ml-1
-              w-[24px]
-              h-[24px]
-              rounded-full
-              bg-[#B21E6F]
-              flex
-              items-center
-              justify-center
-              text-[8px]
-              font-semibold
-              text-white
-            "
-          >
-            ER
-          </button>
-
+              <Link
+                to="/register"
+                className="rounded-full bg-[#FF5F15] px-4 py-2 text-[10px] font-semibold text-white transition hover:bg-[#e9500c] sm:px-6"
+              >
+                Regístrate
+              </Link>
+            </div>
+          ) : (
+            <button
+              type="button"
+              title={`${user?.name || "Usuario"} - Cerrar sesión`}
+              onClick={logout}
+              className="ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#A31970] text-[10px] font-semibold text-white"
+            >
+              {initials || "U"}
+            </button>
+          )}
         </div>
       </div>
     </nav>

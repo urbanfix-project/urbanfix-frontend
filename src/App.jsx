@@ -1,9 +1,10 @@
 // src/App.jsx
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { useAuth } from "./context/AuthContext";
+import { useAuth } from "./context/useAuth";
 import Login from "./pages/Login";
-
+import AdminHome from "./pages/admin/AdminHome";
+import AdminUsers from "./pages/admin/AdminUsers";
 function Register() {
   return <h1>Registro</h1>;
 }
@@ -16,30 +17,37 @@ function TecnicoHome() {
   return <h1>Panel Técnico</h1>;
 }
 
-function AdminHome() {
-  return <h1>Panel Administrador</h1>;
-}
-
 function App() {
   const { user } = useAuth();
 
   const isAuthenticated = !!user;
-  const userRole = user?.role;
+  const userRole = String(user?.role ?? "")
+    .trim()
+    .toUpperCase();
+  console.log("Usuario en App:", user);
+  console.log("Rol en App:", userRole);
+  console.log("¿Autenticado?:", isAuthenticated);
 
   return (
     <BrowserRouter>
       <Routes>
-        {/* ================= RUTAS PÚBLICAS ================= */}
+        {/* Redirigir la página principal al login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
+        {/* Rutas públicas */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
         {/* ================= RUTAS PROTEGIDAS ================= */}
-        
+
         {/* Ruta privada - Cliente */}
         <Route
           element={
             <ProtectedRoute
-              isAllowed={isAuthenticated && (userRole === "client" || userRole === "cliente")}
+              isAllowed={
+                isAuthenticated &&
+                ["CLIENT", "CLIENTE", "CUSTOMER"].includes(userRole)
+              }
             />
           }
         >
@@ -50,7 +58,10 @@ function App() {
         <Route
           element={
             <ProtectedRoute
-              isAllowed={isAuthenticated && (userRole === "technician" || userRole === "tecnico")}
+              isAllowed={
+                isAuthenticated &&
+                ["TECHNICIAN", "TECNICO", "TÉCNICO"].includes(userRole)
+              }
             />
           }
         >
@@ -61,11 +72,14 @@ function App() {
         <Route
           element={
             <ProtectedRoute
-              isAllowed={isAuthenticated && (userRole === "admin" || userRole === "administrador")}
+              isAllowed={
+                isAuthenticated && ["ADMIN", "ADMINISTRADOR"].includes(userRole)
+              }
             />
           }
         >
           <Route path="/admin" element={<AdminHome />} />
+          <Route path="/admin/usuarios" element={<AdminUsers />} />
         </Route>
 
         {/* Ruta por defecto */}

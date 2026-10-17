@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import Navbar from "../../components/Navbar";
 const requests = [
   {
     id: "#1042",
@@ -68,17 +68,15 @@ const AdminHome = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navbar />
+
       {/* Contenido */}
       <div className="mx-auto max-w-[1160px] px-6 py-10">
-
         {/* Título */}
-        <h1 className="text-h2 text-primary mb-8">
-          Panel de Administración
-        </h1>
+        <h1 className="text-h2 text-primary mb-8">Panel de Administración</h1>
 
         {/* Estadísticas */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-5">
-
           <StatCard
             title="Total solicitudes"
             value="128"
@@ -102,18 +100,13 @@ const AdminHome = () => {
             value="22"
             description="Servicio cerrado"
           />
-
         </div>
 
         {/* Panel de solicitudes */}
         <section className="rounded-[20px] border-2 border-blueLight/40 bg-white p-5 shadow-sm">
-
           {/* Encabezado */}
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-
-            <h2 className="text-h3 text-primary">
-              Monitoreo de solicitudes
-            </h2>
+            <h2 className="text-h3 text-primary">Monitoreo de solicitudes</h2>
 
             {/* Filtros */}
             <div className="flex flex-wrap gap-2">
@@ -174,9 +167,7 @@ const AdminHome = () => {
 
           {/* Tabla */}
           <div className="overflow-x-auto rounded-[12px] border border-blueLight/30">
-
             <table className="w-full min-w-[850px] text-left">
-
               <thead className="bg-background">
                 <tr className="text-caption text-primary">
                   <th className="px-3 py-3 font-medium">#ID</th>
@@ -196,25 +187,15 @@ const AdminHome = () => {
                     key={request.id}
                     className="border-t border-blueLight/20 text-caption text-primary"
                   >
-                    <td className="px-3 py-3">
-                      {request.id}
-                    </td>
+                    <td className="px-3 py-3">{request.id}</td>
 
-                    <td className="px-3 py-3">
-                      {request.client}
-                    </td>
+                    <td className="px-3 py-3">{request.client}</td>
 
-                    <td className="px-3 py-3">
-                      {request.service}
-                    </td>
+                    <td className="px-3 py-3">{request.service}</td>
 
-                    <td className="px-3 py-3">
-                      {request.technician}
-                    </td>
+                    <td className="px-3 py-3">{request.technician}</td>
 
-                    <td className="px-3 py-3">
-                      {request.zone}
-                    </td>
+                    <td className="px-3 py-3">{request.zone}</td>
 
                     <td className="px-3 py-3">
                       <span
@@ -235,9 +216,7 @@ const AdminHome = () => {
                       </span>
                     </td>
 
-                    <td className="px-3 py-3">
-                      {request.date}
-                    </td>
+                    <td className="px-3 py-3">{request.date}</td>
 
                     <td className="px-3 py-3">
                       <button
@@ -274,7 +253,6 @@ const AdminHome = () => {
                   </tr>
                 )}
               </tbody>
-
             </table>
           </div>
 
@@ -308,7 +286,6 @@ const AdminHome = () => {
               ›
             </button>
           </div>
-
         </section>
       </div>
     </div>
@@ -317,7 +294,8 @@ const AdminHome = () => {
 
 const StatCard = ({ title, value, description }) => {
   return (
-    <div className="
+    <div
+      className="
       h-[66px]
       rounded-[12px]
       border
@@ -326,18 +304,13 @@ const StatCard = ({ title, value, description }) => {
       px-3
       py-2
       shadow-sm
-    ">
-      <p className="text-[9px] text-blueLight">
-        {title}
-      </p>
+    "
+    >
+      <p className="text-[9px] text-blueLight">{title}</p>
 
-      <p className="text-[20px] font-bold leading-6 text-primary">
-        {value}
-      </p>
+      <p className="text-[20px] font-bold leading-6 text-primary">{value}</p>
 
-      <p className="text-[8px] text-blueLight">
-        {description}
-      </p>
+      <p className="text-[8px] text-blueLight">{description}</p>
     </div>
   );
 };
