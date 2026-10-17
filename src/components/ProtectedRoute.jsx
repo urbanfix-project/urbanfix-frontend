@@ -1,14 +1,38 @@
+
 import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "../context/useAuth";
+
+const dashboards = {
+  ADMIN: "/admin",
+  ADMINISTRADOR: "/admin",
+  TECNICO: "/tecnico",
+  TÉCNICO: "/tecnico",
+  TECHNICIAN: "/tecnico",
+  CLIENTE: "/cliente",
+  CLIENT: "/cliente",
+  CUSTOMER: "/cliente",
+};
 
 const ProtectedRoute = ({ isAllowed }) => {
-  console.log("ProtectedRoute - acceso permitido:", isAllowed);
+  const { user } = useAuth();
 
-  if (!isAllowed) {
-    console.log("Acceso denegado. Redirigiendo al login.");
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  console.log("Acceso permitido. Mostrando la página.");
+  if (!isAllowed) {
+    const role = String(user.role ?? "")
+      .trim()
+      .toUpperCase();
+
+    return (
+      <Navigate
+        to={dashboards[role] || "/login"}
+        replace
+      />
+    );
+  }
+
   return <Outlet />;
 };
 

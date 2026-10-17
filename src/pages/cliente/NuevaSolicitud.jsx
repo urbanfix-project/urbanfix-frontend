@@ -1,6 +1,8 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
+import api from "../../services/api";
 
 const oficios = [
   "Plomería",
@@ -12,6 +14,16 @@ const oficios = [
   "Aire acondicionado",
   "No sé / puede ser más de un oficio",
 ];
+
+const profesiones = {
+  Plomería: "PLOMERO",
+  Electricidad: "ELECTRICISTA",
+  Gasista: "GASISTA",
+  Cerrajería: "CERRAJERO",
+  Carpintería: "CARPINTERO",
+  Pintura: "PINTOR",
+  "Aire acondicionado": "TECNICO_AIRE_ACONDICIONADO",
+};
 
 const horarios = [
   { label: "Mañana (9 a 13hs)", value: "Mañana (09:00 a 13:00 hs)" },
@@ -33,10 +45,17 @@ export default function NuevaSolicitud() {
   const [direccion, setDireccion] = useState("");
   const [horario, setHorario] = useState(horarios[0].value);
   const [publicada, setPublicada] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState("");
 
   const seleccionarFotos = (event) => {
     const seleccionadas = Array.from(event.target.files || []);
-    setFotos((actuales) => [...actuales, ...seleccionadas].slice(0, 3));
+    const disponibles = Math.max(0, 3 - fotos.length);
+
+    setFotos((actuales) =>
+      [...actuales, ...seleccionadas.slice(0, disponibles)].slice(0, 3)
+    );
+
     event.target.value = "";
   };
 
@@ -46,18 +65,47 @@ export default function NuevaSolicitud() {
 
   const siguiente = (event) => {
     event.preventDefault();
+    setError("");
     setPaso((actual) => Math.min(actual + 1, 4));
   };
 
   const anterior = () => {
+    setError("");
     setPaso((actual) => Math.max(actual - 1, 1));
   };
 
-  const publicar = (event) => {
+  const publicar = async (event) => {
     event.preventDefault();
 
-    // Aquí se conectará el servicio del backend para guardar la solicitud.
-    setPublicada(true);
+    if (guardando) return;
+
+    setGuardando(true);
+    setError("");
+
+    try {
+      const solicitud = {
+        title: `Solicitud de ${oficio}`,
+        description: descripcion.trim(),
+      };
+
+      // Si el cliente no conoce el oficio, no enviamos requiredProfession.
+      if (profesiones[oficio]) {
+        solicitud.requiredProfession = profesiones[oficio];
+      }
+
+      await api.post("/service-requests", solicitud);
+
+      setPublicada(true);
+    } catch (err) {
+      console.error("Error al crear la solicitud:", err);
+
+      setError(
+        err.response?.data?.message ||
+          "No se pudo publicar la solicitud. Inténtalo nuevamente."
+      );
+    } finally {
+      setGuardando(false);
+    }
   };
 
   return (
@@ -86,6 +134,7 @@ export default function NuevaSolicitud() {
                 >
                   {numero}
                 </span>
+
                 <span
                   className={`whitespace-nowrap text-[10px] ${
                     paso === numero
@@ -95,6 +144,7 @@ export default function NuevaSolicitud() {
                 >
                   {nombre}
                 </span>
+
                 {index < 3 && (
                   <span className="ml-1 text-sm text-slate-600">›</span>
                 )}
@@ -125,6 +175,7 @@ export default function NuevaSolicitud() {
                 className="mt-1 w-full rounded-full border border-[#536B9A] bg-white px-3 py-2 text-[10px] outline-none focus:border-[#FF6422]"
               >
                 <option value="">Seleccioná un oficio</option>
+
                 {oficios.map((item) => (
                   <option key={item} value={item}>
                     {item}
@@ -164,7 +215,10 @@ export default function NuevaSolicitud() {
 
               <div className="mt-2 flex flex-wrap gap-2">
                 {fotos.map((foto, index) => (
-                  <div key={`${foto.name}-${index}`} className="relative">
+                  <div
+                    key={`${foto.name}-${index}`}
+                    className="relative"
+                  >
                     <img
                       src={URL.createObjectURL(foto)}
                       alt={`Foto ${index + 1}`}
@@ -195,6 +249,11 @@ export default function NuevaSolicitud() {
                   </label>
                 )}
               </div>
+
+              <p className="mt-2 text-[9px] text-[#7185A6]">
+                Podés seleccionar hasta 3 fotos. Por ahora solo se muestran
+                en pantalla; el endpoint documentado no incluye su carga.
+              </p>
             </>
           )}
 
@@ -208,17 +267,19 @@ export default function NuevaSolicitud() {
               <label className="mt-4 block text-[10px] text-slate-800">
                 Localidad / Zona
               </label>
+
               <input
                 value={zona}
                 onChange={(e) => setZona(e.target.value)}
                 required
-                placeholder="Ej.: Palermo, CABA"
+                placeholder="Ej.: Centro, Quito"
                 className="mt-1 w-full rounded-full border border-[#9AA9C2] px-3 py-2 text-[10px] outline-none focus:border-[#071B68]"
               />
 
               <label className="mt-4 block text-[10px] text-slate-800">
                 Dirección exacta
               </label>
+
               <input
                 value={direccion}
                 onChange={(e) => setDireccion(e.target.value)}
@@ -266,6 +327,7 @@ export default function NuevaSolicitud() {
                 <p className="font-semibold text-[#011659]">
                   Resumen de tu solicitud
                 </p>
+
                 <ul className="mt-2 list-disc pl-4">
                   <li>Servicio: {oficio}</li>
                   <li>Descripción: {descripcion}</li>
@@ -279,13 +341,23 @@ export default function NuevaSolicitud() {
             </>
           )}
 
+          {error && (
+            <p
+              role="alert"
+              className="mt-4 rounded-lg bg-red-50 p-3 text-xs text-red-700"
+            >
+              {error}
+            </p>
+          )}
+
           {/* BOTONES */}
           <div className="mt-6 flex justify-end gap-2">
             {paso > 1 && (
               <button
                 type="button"
                 onClick={anterior}
-                className="rounded-full border border-[#071B68] px-5 py-2 text-[10px] font-semibold text-[#071B68] hover:bg-slate-50"
+                disabled={guardando}
+                className="rounded-full border border-[#071B68] px-5 py-2 text-[10px] font-semibold text-[#071B68] hover:bg-slate-50 disabled:opacity-60"
               >
                 Atrás
               </button>
@@ -301,9 +373,10 @@ export default function NuevaSolicitud() {
             ) : (
               <button
                 type="submit"
-                className="rounded-full bg-[#FF6422] px-4 py-2 text-[10px] font-semibold text-white hover:bg-[#e9500c]"
+                disabled={guardando}
+                className="rounded-full bg-[#FF6422] px-4 py-2 text-[10px] font-semibold text-white hover:bg-[#e9500c] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Confirmar y publicar
+                {guardando ? "Publicando..." : "Confirmar y publicar"}
               </button>
             )}
           </div>
