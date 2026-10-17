@@ -1,9 +1,11 @@
-import { Link, useLocation } from "react-router-dom";
+
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const publicRoutes = [
     "/",
@@ -17,11 +19,11 @@ const Navbar = () => {
   ];
 
   const isPublic = publicRoutes.includes(location.pathname);
+  const role = String(user?.role ?? "").trim().toUpperCase();
 
-  const role = String(user?.role ?? "")
-    .trim()
-    .toUpperCase();
   const isAdmin = ["ADMIN", "ADMINISTRADOR"].includes(role);
+  const isClient = ["CLIENT", "CLIENTE", "CUSTOMER"].includes(role);
+  const isTechnician = ["TECHNICIAN", "TECNICO", "TÉCNICO"].includes(role);
 
   const initials = (user?.name || "Usuario")
     .trim()
@@ -43,16 +45,31 @@ const Navbar = () => {
           { label: "Gestión usuarios", to: "/admin/usuarios" },
           { label: "Monitoreo de solicitudes", to: "/admin" },
         ]
-      : [
-          { label: "Solicitudes Disponibles", to: "/tecnico" },
-          { label: "Mis trabajos", to: "/tecnico/trabajos" },
-        ];
+      : isClient
+        ? [
+            { label: "Mis solicitudes", to: "/cliente" },
+            { label: "Soporte", to: "/soporte" },
+          ]
+        : isTechnician
+          ? [
+              { label: "Solicitudes Disponibles", to: "/tecnico" },
+              { label: "Mis trabajos", to: "/tecnico/trabajos" },
+            ]
+          : [];
+
+  const homePath = isPublic
+    ? "/login"
+    : isAdmin
+      ? "/admin"
+      : isClient
+        ? "/cliente"
+        : "/tecnico";
 
   return (
     <nav className="relative z-10 h-[60px] w-full border-b border-slate-100 bg-white">
       <div className="mx-auto flex h-full max-w-[1160px] items-center justify-between gap-4 px-5 sm:px-6">
         <Link
-          to={isPublic ? "/login" : isAdmin ? "/admin" : "/tecnico"}
+          to={homePath}
           className="shrink-0 text-[22px] font-extrabold tracking-tight"
         >
           <span className="text-[#011659]">Urban</span>
@@ -66,13 +83,23 @@ const Navbar = () => {
               to={link.to}
               className={`hidden whitespace-nowrap text-[11px] font-medium transition-colors sm:block ${
                 location.pathname === link.to
-                  ? "font-semibold text-[#011659]"
+                  ? "border-b-2 border-[#011659] font-semibold text-[#011659]"
                   : "text-[#011659] hover:text-[#FF5F15]"
               }`}
             >
               {link.label}
             </Link>
           ))}
+
+          {isClient && !isPublic && (
+            <button
+              type="button"
+              onClick={() => navigate("/cliente/nueva-solicitud")}
+              className="rounded-full bg-[#FF6422] px-4 py-2 text-[10px] font-semibold text-white transition hover:bg-[#e9500c]"
+            >
+              + Nueva solicitud
+            </button>
+          )}
 
           {isPublic ? (
             <div className="flex items-center gap-2">

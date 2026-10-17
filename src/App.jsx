@@ -7,13 +7,13 @@ import AdminHome from "./pages/admin/AdminHome";
 import AdminUsers from "./pages/admin/AdminUsers";
 import TecnicoHome from "./pages/tecnico/TecnicoHome";
 import TecnicoWork from "./pages/tecnico/TecnicoWork";
+import ClienteHome from "./pages/cliente/ClienteHome";
+import NuevaSolicitud from "./pages/cliente/NuevaSolicitud";
 function Register() {
   return <h1>Registro</h1>;
 }
 
-function ClienteHome() {
-  return <h1>Panel Cliente</h1>;
-}
+
 
 
 
@@ -52,6 +52,7 @@ function App() {
           }
         >
           <Route path="/cliente" element={<ClienteHome />} />
+          <Route path="/cliente/nueva-solicitud" element={<NuevaSolicitud />} />
         </Route>
 
         {/* Ruta privada - Técnico */}
