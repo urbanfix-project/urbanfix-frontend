@@ -1,5 +1,5 @@
 // src/App.jsx
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/useAuth";
 import Login from "./pages/Login";
@@ -31,7 +31,10 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* ================= RUTAS PÚBLICAS ================= */}
+        {/* Redirigir la página principal al login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
+        {/* Rutas públicas */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 

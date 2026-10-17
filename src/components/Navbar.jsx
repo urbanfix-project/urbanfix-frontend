@@ -5,7 +5,22 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
 
-  const role = String(user?.role ?? "").trim().toUpperCase();
+  const publicRoutes = [
+    "/",
+    "/login",
+    "/register",
+    "/oficios",
+    "/como-funciona",
+    "/nosotros",
+    "/faq",
+    "/soporte",
+  ];
+
+  const isPublic = publicRoutes.includes(location.pathname);
+
+  const role = String(user?.role ?? "")
+    .trim()
+    .toUpperCase();
   const isAdmin = ["ADMIN", "ADMINISTRADOR"].includes(role);
 
   const initials = (user?.name || "Usuario")
@@ -15,57 +30,76 @@ const Navbar = () => {
     .map((word) => word[0]?.toUpperCase())
     .join("");
 
-  const links = isAdmin
+  const links = isPublic
     ? [
-        { label: "Gestión usuarios", to: "/admin/usuarios" },
-        { label: "Monitoreo de solicitudes", to: "/admin" },
+        { label: "Oficios", to: "/oficios" },
+        { label: "¿Cómo funciona?", to: "/como-funciona" },
+        { label: "Nosotros", to: "/nosotros" },
+        { label: "FAQ", to: "/faq" },
+        { label: "Soporte", to: "/soporte" },
       ]
-    : [
-        { label: "Solicitudes Disponibles", to: "/tecnico" },
-        { label: "Mis trabajos", to: "/tecnico/trabajos" },
-      ];
+    : isAdmin
+      ? [
+          { label: "Gestión usuarios", to: "/admin/usuarios" },
+          { label: "Monitoreo de solicitudes", to: "/admin" },
+        ]
+      : [
+          { label: "Solicitudes Disponibles", to: "/tecnico" },
+          { label: "Mis trabajos", to: "/tecnico/trabajos" },
+        ];
 
   return (
-    <nav className="w-full h-14 bg-white border-b border-slate-200">
-      <div className="mx-auto max-w-[1160px] h-full px-6 flex items-center justify-between">
-        {/* Logo */}
+    <nav className="relative z-10 h-[60px] w-full border-b border-slate-100 bg-white">
+      <div className="mx-auto flex h-full max-w-[1160px] items-center justify-between gap-4 px-5 sm:px-6">
         <Link
-          to={isAdmin ? "/admin" : "/tecnico"}
-          className="text-[22px] font-extrabold tracking-tight"
+          to={isPublic ? "/login" : isAdmin ? "/admin" : "/tecnico"}
+          className="shrink-0 text-[22px] font-extrabold tracking-tight"
         >
           <span className="text-[#011659]">Urban</span>
           <span className="text-[#FF5F15]">Fix</span>
         </Link>
 
-        {/* Navegación */}
-        <div className="flex items-center h-full gap-5">
-          {links.map((link) => {
-            const active = location.pathname === link.to;
+        <div className="flex h-full items-center gap-3 sm:gap-5">
+          {links.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`hidden whitespace-nowrap text-[11px] font-medium transition-colors sm:block ${
+                location.pathname === link.to
+                  ? "font-semibold text-[#011659]"
+                  : "text-[#011659] hover:text-[#FF5F15]"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
 
-            return (
+          {isPublic ? (
+            <div className="flex items-center gap-2">
               <Link
-                key={link.to}
-                to={link.to}
-                className={`text-[11px] font-medium whitespace-nowrap transition-colors ${
-                  active
-                    ? "text-[#011659] font-semibold"
-                    : "text-[#011659] hover:text-[#FF5F15]"
-                }`}
+                to="/login"
+                className="rounded-full border border-[#011659] px-4 py-2 text-[10px] font-semibold text-[#011659] transition hover:bg-slate-50 sm:px-5"
               >
-                {link.label}
+                Iniciar Sesión
               </Link>
-            );
-          })}
 
-          {/* Avatar */}
-          <button
-            type="button"
-            title={`${user?.name || "Usuario"} - Cerrar sesión`}
-            onClick={logout}
-            className="ml-1 w-8 h-8 shrink-0 rounded-full bg-[#A31970] flex items-center justify-center text-[10px] font-semibold text-white"
-          >
-            {initials || "U"}
-          </button>
+              <Link
+                to="/register"
+                className="rounded-full bg-[#FF5F15] px-4 py-2 text-[10px] font-semibold text-white transition hover:bg-[#e9500c] sm:px-6"
+              >
+                Regístrate
+              </Link>
+            </div>
+          ) : (
+            <button
+              type="button"
+              title={`${user?.name || "Usuario"} - Cerrar sesión`}
+              onClick={logout}
+              className="ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#A31970] text-[10px] font-semibold text-white"
+            >
+              {initials || "U"}
+            </button>
+          )}
         </div>
       </div>
     </nav>
