@@ -1,318 +1,560 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Navbar from "../../components/Navbar";
-const requests = [
-  {
-    id: "#1042",
-    client: "Marta G.",
-    service: "Plomería",
-    technician: "Roberto G.",
-    zone: "Palermo",
-    status: "Aceptado",
-    date: "24/09",
-  },
-  {
-    id: "#1041",
-    client: "Lucas Gómez",
-    service: "Gas",
-    technician: "—",
-    zone: "Almagro",
-    status: "Pendiente",
-    date: "23/09",
-  },
-  {
-    id: "#1040",
-    client: "Carla Rossi",
-    service: "Electricidad",
-    technician: "Carlos M.",
-    zone: "Belgrano",
-    status: "Completado",
-    date: "20/09",
-  },
-  {
-    id: "#1039",
-    client: "Esteban P.",
-    service: "Cerrajería",
-    technician: "—",
-    zone: "Recoleta",
-    status: "Cancelado",
-    date: "19/09",
-  },
+import AdminTabs from "../../components/AdminTabs";
+import api from "../../services/api";
+
+const estados = [
+  { valor: "TODAS", nombre: "Todas" },
+  { valor: "PENDIENTE", nombre: "Pendiente" },
+  { valor: "ACEPTADA", nombre: "Aceptada" },
+  { valor: "EN_PROGRESO", nombre: "En progreso" },
+  { valor: "COMPLETADA", nombre: "Completada" },
+  { valor: "RECHAZADA", nombre: "Rechazada" },
+  { valor: "CANCELADA", nombre: "Cancelada" },
 ];
 
-const statusStyles = {
-  Aceptado: "bg-green-200 text-green-800 border-green-400",
-  Pendiente: "bg-yellow-100 text-yellow-800 border-yellow-400",
-  Completado: "bg-blue-200 text-primary border-blue-400",
-  Cancelado: "bg-red-200 text-red-800 border-red-400",
+const estilosEstado = {
+  PENDIENTE: "bg-yellow-100 text-yellow-800",
+  ACEPTADA: "bg-green-100 text-green-800",
+  EN_PROGRESO: "bg-blue-100 text-blue-800",
+  COMPLETADA: "bg-emerald-100 text-emerald-800",
+  RECHAZADA: "bg-orange-100 text-orange-800",
+  CANCELADA: "bg-red-100 text-red-800",
 };
 
-const filters = ["Todas", "Pendiente", "Aceptado", "Completado", "Cancelado"];
+const nombresOficio = {
+  ELECTRICISTA: "Electricidad",
+  PLOMERO: "Plomería",
+  GASISTA: "Gas",
+  TECNICO_AC: "Refrigeración",
+  CERRAJERO: "Cerrajería",
+  ALBANIL: "Albañilería",
+};
 
-const AdminHome = () => {
-  const [activeFilter, setActiveFilter] = useState("Todas");
-  const [search, setSearch] = useState("");
+function obtenerNombre(valor) {
+  if (typeof valor === "string") {
+    return valor || "—";
+  }
 
-  const filteredRequests = requests.filter((request) => {
-    const matchesFilter =
-      activeFilter === "Todas" || request.status === activeFilter;
+  if (!valor || typeof valor !== "object") {
+    return "—";
+  }
 
-    const searchText = search.toLowerCase();
+  const nombreCompleto = [
+    valor.nombre || valor.name || valor.firstName,
+    valor.apellido || valor.lastName,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-    const matchesSearch =
-      request.client.toLowerCase().includes(searchText) ||
-      request.service.toLowerCase().includes(searchText) ||
-      request.zone.toLowerCase().includes(searchText);
+  return valor.nombreCompleto || nombreCompleto || "—";
+}
 
-    return matchesFilter && matchesSearch;
-  });
+function normalizarEstado(valor) {
+  const estado = String(valor || "")
+    .trim()
+    .toUpperCase();
+
+  if (estado === "ACEPTADO") return "ACEPTADA";
+  if (estado === "CANCELADO") return "CANCELADA";
+  if (estado === "COMPLETADO") return "COMPLETADA";
+
+  return estado || "DESCONOCIDO";
+}
+
+function mostrarEstado(estado) {
+  const encontrado = estados.find(
+    (item) => item.valor === estado
+  );
+
+  return encontrado ? encontrado.nombre : estado;
+}
+
+function mostrarFecha(valor) {
+  if (!valor) return "—";
+
+  const fecha = new Date(valor);
+
+  if (Number.isNaN(fecha.getTime())) {
+    return String(valor);
+  }
+
+  return fecha.toLocaleDateString("es-AR");
+}
+
+function adaptarSolicitud(item) {
+  const oficio =
+    item.requiredProfession ||
+    item.oficio ||
+    item.servicio ||
+    item.service ||
+    item.tipoServicio;
+
+  const oficioNombre = obtenerNombre(oficio);
+
+  return {
+    id:
+      item.id ||
+      item.solicitudId ||
+      item.serviceRequestId ||
+      null,
+
+    cliente: obtenerNombre(
+      item.cliente ||
+      item.usuarioCliente ||
+      item.client ||
+      item.clienteNombre ||
+      item.clientName
+    ),
+
+    oficio:
+      nombresOficio[oficioNombre] ||
+      oficioNombre ||
+      "—",
+
+    tecnico: obtenerNombre(
+      item.tecnico ||
+      item.technician ||
+      item.tecnicoNombre ||
+      item.technicianName
+    ),
+
+    zona: obtenerNombre(
+      item.zona ||
+      item.barrio ||
+      item.direccion ||
+      item.address
+    ),
+
+    estado: normalizarEstado(
+      item.estado || item.status
+    ),
+
+    fecha: mostrarFecha(
+      item.fechaCreacion ||
+      item.createdAt ||
+      item.fecha
+    ),
+  };
+}
+
+function extraerSolicitudes(datos) {
+  if (Array.isArray(datos)) return datos;
+
+  if (datos && Array.isArray(datos.data)) {
+    return datos.data;
+  }
+
+  if (datos && Array.isArray(datos.content)) {
+    return datos.content;
+  }
+
+  if (datos && Array.isArray(datos.solicitudes)) {
+    return datos.solicitudes;
+  }
+
+  if (datos && datos.data && Array.isArray(datos.data.content)) {
+    return datos.data.content;
+  }
+
+  throw new Error(
+    "El Backend devolvió un formato de solicitudes no reconocido."
+  );
+}
+
+function StatCard({ title, value, description }) {
+  return (
+    <div className="rounded-xl border border-blueLight/40 bg-white p-4 shadow-sm">
+      <p className="text-xs text-blueLight">{title}</p>
+
+      <p className="mt-2 text-2xl font-bold text-primary">
+        {value}
+      </p>
+
+      <p className="mt-1 text-xs text-blueLight">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+export default function AdminHome() {
+  const [solicitudes, setSolicitudes] = useState([]);
+  const [filtro, setFiltro] = useState("TODAS");
+  const [busqueda, setBusqueda] = useState("");
+  const [cargando, setCargando] = useState(true);
+  const [cancelandoId, setCancelandoId] = useState(null);
+  const [error, setError] = useState("");
+  const [mensaje, setMensaje] = useState("");
+
+  useEffect(() => {
+    let activo = true;
+
+    async function cargarSolicitudes() {
+      try {
+        setCargando(true);
+        setError("");
+
+        const respuesta = await api.get(
+          "/admin/service-requests"
+        );
+
+        const registros = extraerSolicitudes(
+          respuesta.data
+        );
+
+        if (activo) {
+          setSolicitudes(
+            registros.map(adaptarSolicitud)
+          );
+        }
+      } catch (err) {
+        if (!activo) return;
+
+        const estadoHttp =
+          err.response && err.response.status;
+
+        if (estadoHttp === 401 || estadoHttp === 403) {
+          setError(
+            "Necesitás una cuenta ADMIN válida para consultar las solicitudes."
+          );
+        } else {
+          setError(
+            err.message ||
+            "No se pudieron cargar las solicitudes."
+          );
+        }
+      } finally {
+        if (activo) {
+          setCargando(false);
+        }
+      }
+    }
+
+    cargarSolicitudes();
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  const solicitudesFiltradas = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase();
+
+    return solicitudes.filter((solicitud) => {
+      const coincideEstado =
+        filtro === "TODAS" ||
+        solicitud.estado === filtro;
+
+      const coincideBusqueda = [
+        solicitud.id,
+        solicitud.cliente,
+        solicitud.oficio,
+        solicitud.tecnico,
+        solicitud.zona,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(texto);
+
+      return coincideEstado && coincideBusqueda;
+    });
+  }, [solicitudes, filtro, busqueda]);
+
+  const pendientes = solicitudes.filter(
+    (item) => item.estado === "PENDIENTE"
+  ).length;
+
+  const enCurso = solicitudes.filter(
+    (item) =>
+      item.estado === "ACEPTADA" ||
+      item.estado === "EN_PROGRESO"
+  ).length;
+
+  const completadas = solicitudes.filter(
+    (item) => item.estado === "COMPLETADA"
+  ).length;
+
+  async function cancelarOrden(solicitud) {
+    if (!solicitud.id || cancelandoId !== null) {
+      return;
+    }
+
+    const confirmar = window.confirm(
+      `¿Querés cancelar la solicitud #${solicitud.id}?`
+    );
+
+    if (!confirmar) return;
+
+    const estadoAnterior = solicitud.estado;
+
+    setError("");
+    setMensaje("");
+    setCancelandoId(solicitud.id);
+
+    // Actualización optimista
+    setSolicitudes((anteriores) =>
+      anteriores.map((item) =>
+        item.id === solicitud.id
+          ? { ...item, estado: "CANCELADA" }
+          : item
+      )
+    );
+
+    try {
+      await api.patch(
+        `/admin/service-requests/${solicitud.id}/status`,
+        { status: "CANCELADA" }
+      );
+
+      setMensaje(
+        `La solicitud #${solicitud.id} fue cancelada.`
+      );
+    } catch (err) {
+      // Restaurar el estado anterior si falla
+      setSolicitudes((anteriores) =>
+        anteriores.map((item) =>
+          item.id === solicitud.id
+            ? { ...item, estado: estadoAnterior }
+            : item
+        )
+      );
+
+      const mensajeBackend =
+        err.response &&
+        err.response.data &&
+        err.response.data.message;
+
+      setError(
+        typeof mensajeBackend === "string"
+          ? mensajeBackend
+          : "No se pudo cancelar la solicitud. Se restauró su estado anterior."
+      );
+    } finally {
+      setCancelandoId(null);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Contenido */}
-      <div className="mx-auto max-w-[1160px] px-6 py-10">
-        {/* Título */}
-        <h1 className="text-h2 text-primary mb-8">Panel de Administración</h1>
+      <main className="mx-auto max-w-[1160px] px-6 py-10">
+        <h1 className="mb-8 text-h2 text-primary">
+          Panel de Administración
+        </h1>
 
-        {/* Estadísticas */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-5">
+        <AdminTabs />
+
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            title="Total solicitudes"
-            value="128"
-            description="+5 hoy"
+            title="Solicitudes cargadas"
+            value={solicitudes.length}
+            description="Total recibido del Backend"
           />
 
           <StatCard
             title="Pendientes"
-            value="12"
-            description="En espera de técnico"
+            value={pendientes}
+            description="Esperando atención"
           />
 
           <StatCard
-            title="En curso (Aceptadas)"
-            value="8"
-            description="Con visita pactada"
+            title="En curso"
+            value={enCurso}
+            description="Aceptadas o en progreso"
           />
 
           <StatCard
             title="Completadas"
-            value="22"
-            description="Servicio cerrado"
+            value={completadas}
+            description="Servicios finalizados"
           />
         </div>
 
-        {/* Panel de solicitudes */}
         <section className="rounded-[20px] border-2 border-blueLight/40 bg-white p-5 shadow-sm">
-          {/* Encabezado */}
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <h2 className="text-h3 text-primary">Monitoreo de solicitudes</h2>
+          <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <h2 className="text-h3 text-primary">
+              Monitoreo de solicitudes
+            </h2>
 
-            {/* Filtros */}
-            <div className="flex flex-wrap gap-2">
-              {filters.map((filter) => (
-                <button
-                  key={filter}
-                  type="button"
-                  onClick={() => setActiveFilter(filter)}
-                  className={`
-                    h-[30px]
-                    rounded-full
-                    border
-                    px-4
-                    text-caption
-                    transition-colors
-                    ${
-                      activeFilter === filter
-                        ? "border-primary bg-primary text-white"
-                        : "border-blueLight text-primary bg-white hover:bg-background"
-                    }
-                  `}
-                >
-                  {filter}
-                  {filter === "Todas" && " (214)"}
-                </button>
-              ))}
+            <div className="flex flex-wrap gap-3">
+              <label
+                htmlFor="filtro-estado"
+                className="sr-only"
+              >
+                Filtrar solicitudes por estado
+              </label>
+
+              <select
+                id="filtro-estado"
+                value={filtro}
+                onChange={(e) => setFiltro(e.target.value)}
+                className="rounded-lg border border-blueLight bg-white px-4 py-2 text-sm text-primary"
+              >
+                {estados.map((estado) => (
+                  <option
+                    key={estado.valor}
+                    value={estado.valor}
+                  >
+                    {estado.nombre}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="search"
+                value={busqueda}
+                onChange={(e) =>
+                  setBusqueda(e.target.value)
+                }
+                placeholder="Buscar solicitudes..."
+                aria-label="Buscar solicitudes"
+                className="rounded-lg border border-blueLight bg-white px-4 py-2 text-sm text-primary"
+              />
             </div>
           </div>
 
-          {/* Buscador */}
-          <div className="relative mt-4 mb-4 max-w-[295px]">
-            <input
-              type="text"
-              placeholder="Buscar por nombre, email o zona"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="
-                h-[40px]
-                w-full
-                rounded-full
-                border
-                border-blueLight
-                bg-white
-                px-5
-                pr-10
-                text-caption
-                text-primary
-                outline-none
-                placeholder:text-blueLight
-                focus:border-primary
-              "
-            />
+          {error && (
+            <div
+              role="alert"
+              className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700"
+            >
+              {error}
+            </div>
+          )}
 
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-blueLight">
-              🔍
-            </span>
-          </div>
+          {mensaje && (
+            <div
+              role="status"
+              className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-800"
+            >
+              {mensaje}
+            </div>
+          )}
 
-          {/* Tabla */}
-          <div className="overflow-x-auto rounded-[12px] border border-blueLight/30">
+          <div className="overflow-x-auto rounded-xl border border-blueLight/30">
             <table className="w-full min-w-[850px] text-left">
               <thead className="bg-background">
-                <tr className="text-caption text-primary">
-                  <th className="px-3 py-3 font-medium">#ID</th>
-                  <th className="px-3 py-3 font-medium">Cliente</th>
-                  <th className="px-3 py-3 font-medium">Oficio</th>
-                  <th className="px-3 py-3 font-medium">Técnico</th>
-                  <th className="px-3 py-3 font-medium">Zona</th>
-                  <th className="px-3 py-3 font-medium">Estado</th>
-                  <th className="px-3 py-3 font-medium">Fecha</th>
-                  <th className="px-3 py-3"></th>
+                <tr className="text-sm text-primary">
+                  <th className="px-3 py-3">#ID</th>
+                  <th className="px-3 py-3">Cliente</th>
+                  <th className="px-3 py-3">Oficio</th>
+                  <th className="px-3 py-3">Técnico</th>
+                  <th className="px-3 py-3">Zona</th>
+                  <th className="px-3 py-3">Estado</th>
+                  <th className="px-3 py-3">Fecha</th>
+                  <th className="px-3 py-3">Acción</th>
                 </tr>
               </thead>
 
               <tbody>
-                {filteredRequests.map((request) => (
-                  <tr
-                    key={request.id}
-                    className="border-t border-blueLight/20 text-caption text-primary"
-                  >
-                    <td className="px-3 py-3">{request.id}</td>
-
-                    <td className="px-3 py-3">{request.client}</td>
-
-                    <td className="px-3 py-3">{request.service}</td>
-
-                    <td className="px-3 py-3">{request.technician}</td>
-
-                    <td className="px-3 py-3">{request.zone}</td>
-
-                    <td className="px-3 py-3">
-                      <span
-                        className={`
-                          inline-flex
-                          min-w-[84px]
-                          justify-center
-                          rounded-full
-                          border
-                          px-3
-                          py-1
-                          text-[11px]
-                          font-medium
-                          ${statusStyles[request.status]}
-                        `}
-                      >
-                        {request.status}
-                      </span>
-                    </td>
-
-                    <td className="px-3 py-3">{request.date}</td>
-
-                    <td className="px-3 py-3">
-                      <button
-                        type="button"
-                        className="
-                          whitespace-nowrap
-                          rounded-full
-                          border
-                          border-primary
-                          px-4
-                          py-1.5
-                          text-[11px]
-                          font-medium
-                          text-primary
-                          transition
-                          hover:bg-primary
-                          hover:text-white
-                        "
-                      >
-                        Ver / Moderar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-
-                {filteredRequests.length === 0 && (
+                {cargando && (
                   <tr>
                     <td
-                      colSpan="8"
-                      className="px-4 py-8 text-center text-caption text-blueLight"
+                      colSpan={8}
+                      className="px-4 py-8 text-center text-sm text-blueLight"
                     >
-                      No se encontraron solicitudes.
+                      Cargando solicitudes...
                     </td>
                   </tr>
                 )}
+
+                {!cargando &&
+                  solicitudesFiltradas.map((solicitud) => {
+                    const estadoFinal = [
+                      "CANCELADA",
+                      "COMPLETADA",
+                      "RECHAZADA",
+                    ].includes(solicitud.estado);
+
+                    return (
+                      <tr
+                        key={solicitud.id}
+                        className="border-t border-blueLight/20 text-sm text-primary"
+                      >
+                        <td className="px-3 py-3">
+                          {solicitud.id || "—"}
+                        </td>
+
+                        <td className="px-3 py-3">
+                          {solicitud.cliente}
+                        </td>
+
+                        <td className="px-3 py-3">
+                          {solicitud.oficio}
+                        </td>
+
+                        <td className="px-3 py-3">
+                          {solicitud.tecnico}
+                        </td>
+
+                        <td className="px-3 py-3">
+                          {solicitud.zona}
+                        </td>
+
+                        <td className="px-3 py-3">
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+                              estilosEstado[solicitud.estado] ||
+                              "bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            {mostrarEstado(
+                              solicitud.estado
+                            )}
+                          </span>
+                        </td>
+
+                        <td className="px-3 py-3">
+                          {solicitud.fecha}
+                        </td>
+
+                        <td className="px-3 py-3">
+                          <button
+                            type="button"
+                            disabled={
+                              estadoFinal ||
+                              !solicitud.id ||
+                              cancelandoId !== null
+                            }
+                            onClick={() =>
+                              cancelarOrden(solicitud)
+                            }
+                            className="whitespace-nowrap rounded-full border border-red-500 px-4 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            {cancelandoId === solicitud.id
+                              ? "Cancelando..."
+                              : estadoFinal
+                                ? "Sin acción"
+                                : "Cancelar orden"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                {!cargando &&
+                  solicitudesFiltradas.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={8}
+                        className="px-4 py-8 text-center text-sm text-blueLight"
+                      >
+                        No se encontraron solicitudes.
+                      </td>
+                    </tr>
+                  )}
               </tbody>
             </table>
           </div>
 
-          {/* Paginación */}
-          <div className="mt-4 flex justify-end gap-2">
-            <button
-              type="button"
-              className="h-7 w-7 rounded border border-blueLight/30 text-caption text-blueLight"
-            >
-              ‹
-            </button>
-
-            <button
-              type="button"
-              className="h-7 w-7 rounded border border-blueLight/30 text-caption text-primary"
-            >
-              1
-            </button>
-
-            <button
-              type="button"
-              className="h-7 w-7 rounded border border-blueLight/30 text-caption text-primary"
-            >
-              2
-            </button>
-
-            <button
-              type="button"
-              className="h-7 w-7 rounded border border-blueLight/30 text-caption text-blueLight"
-            >
-              ›
-            </button>
-          </div>
+          <p className="mt-4 text-xs text-blueLight">
+            Mostrando {solicitudesFiltradas.length} de{" "}
+            {solicitudes.length} solicitudes cargadas.
+          </p>
         </section>
-      </div>
+      </main>
     </div>
   );
-};
-
-const StatCard = ({ title, value, description }) => {
-  return (
-    <div
-      className="
-      h-[66px]
-      rounded-[12px]
-      border
-      border-blueLight/40
-      bg-white
-      px-3
-      py-2
-      shadow-sm
-    "
-    >
-      <p className="text-[9px] text-blueLight">{title}</p>
-
-      <p className="text-[20px] font-bold leading-6 text-primary">{value}</p>
-
-      <p className="text-[8px] text-blueLight">{description}</p>
-    </div>
-  );
-};
-
-export default AdminHome;
+}

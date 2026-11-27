@@ -1,41 +1,51 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+    baseURL: import.meta.env.VITE_API_URL,
+    headers: {
+        "Content-Type": "application/json",
+    },
 });
 
-// Interceptor para agregar el JWT automáticamente
+// Agregar el token JWT a las solicitudes
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
+    (config) => {
+        const token = localStorage.getItem("token");
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
 
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
+        return config;
+    },
+    (error) => Promise.reject(error)
 );
 
-// Interceptor para manejar errores de autenticación
+// Manejar los errores de autenticación
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+    (response) => response,
+    (error) => {
+        const requestUrl =
+            error.config && error.config.url ?
+            error.config.url :
+            "";
 
-      window.location.href = "/login"; // Redirige al usuario a la página de inicio de sesión
+        const isLoginRequest = requestUrl.includes("/auth/login");
+
+        const isUnauthorized =
+            error.response && error.response.status === 401;
+
+        if (isUnauthorized && !isLoginRequest) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+
+            if (window.location.pathname !== "/login") {
+                window.location.href = "/login";
+            }
+        }
+
+        return Promise.reject(error);
     }
-
-    return Promise.reject(error);
-  }
 );
 
 export default api;

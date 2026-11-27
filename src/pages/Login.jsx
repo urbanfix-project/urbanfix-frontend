@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { loginRequest } from "../services/authService";
 import Navbar from "../components/Navbar";
+import ilustracionUrbanfix from "../img/ilustracion-urbanfix.png";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -86,12 +87,11 @@ export default function Login() {
       <main className="mx-auto grid min-h-[calc(100vh-56px)] w-full max-w-[1200px] grid-cols-1 items-center gap-8 px-5 py-8 lg:grid-cols-2 lg:gap-16 lg:px-8">
 
         {/* Espacio reservado para la ilustración */}
-      <img
-        src="src/img/ilustracion-urbanfix.png"
-        alt="Profesional de UrbanFix"
-        className="h-[420px] w-full max-w-[460px] object-contain"
-      />
-
+<img
+  src={ilustracionUrbanfix}
+  alt="Profesional de UrbanFix"
+  className="h-[420px] w-full max-w-[460px] object-contain"
+/>
         {/* Tarjeta de inicio de sesión */}
         <section className="mx-auto w-full max-w-[440px] rounded-[22px] bg-white px-8 py-10 sm:px-9 sm:py-12">
 
