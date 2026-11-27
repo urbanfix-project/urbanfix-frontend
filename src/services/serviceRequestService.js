@@ -2,7 +2,7 @@
 import api from './api';
 
 export const getMyServiceRequests = async () => {
-  const response = await api.get('/service-requests');
+  const response = await api.get('/service-requests/mine');
   return response.data;
 };
 
