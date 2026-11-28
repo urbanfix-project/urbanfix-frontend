@@ -1,7 +1,8 @@
-// src/App.jsx
+
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/useAuth";
+
 import Login from "./pages/Login";
 import AdminHome from "./pages/admin/AdminHome";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -9,13 +10,10 @@ import TecnicoHome from "./pages/tecnico/TecnicoHome";
 import TecnicoWork from "./pages/tecnico/TecnicoWork";
 import ClienteHome from "./pages/cliente/ClienteHome";
 import NuevaSolicitud from "./pages/cliente/NuevaSolicitud";
+
 function Register() {
   return <h1>Registro</h1>;
 }
-
-
-
-
 
 function App() {
   const { user } = useAuth();
@@ -24,23 +22,18 @@ function App() {
   const userRole = String(user?.role ?? "")
     .trim()
     .toUpperCase();
-  console.log("Usuario en App:", user);
-  console.log("Rol en App:", userRole);
-  console.log("¿Autenticado?:", isAuthenticated);
 
   return (
     <BrowserRouter>
       <Routes>
-        {/* Redirigir la página principal al login */}
+        {/* Página principal */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* Rutas públicas */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* ================= RUTAS PROTEGIDAS ================= */}
-
-        {/* Ruta privada - Cliente */}
+        {/* Cliente */}
         <Route
           element={
             <ProtectedRoute
@@ -52,10 +45,13 @@ function App() {
           }
         >
           <Route path="/cliente" element={<ClienteHome />} />
-          <Route path="/cliente/nueva-solicitud" element={<NuevaSolicitud />} />
+          <Route
+            path="/cliente/nueva-solicitud"
+            element={<NuevaSolicitud />}
+          />
         </Route>
 
-        {/* Ruta privada - Técnico */}
+        {/* Técnico */}
         <Route
           element={
             <ProtectedRoute
@@ -70,12 +66,13 @@ function App() {
           <Route path="/tecnico/trabajos" element={<TecnicoWork />} />
         </Route>
 
-        {/* Ruta privada - Administrador */}
+        {/* Administrador */}
         <Route
           element={
             <ProtectedRoute
               isAllowed={
-                isAuthenticated && ["ADMIN", "ADMINISTRADOR"].includes(userRole)
+                isAuthenticated &&
+                ["ADMIN", "ADMINISTRADOR"].includes(userRole)
               }
             />
           }
@@ -84,7 +81,7 @@ function App() {
           <Route path="/admin/usuarios" element={<AdminUsers />} />
         </Route>
 
-        {/* Ruta por defecto */}
+        {/* Ruta no encontrada */}
         <Route path="*" element={<Login />} />
       </Routes>
     </BrowserRouter>
